@@ -10,6 +10,7 @@ body, html, div, canvas {
 	padding: 0;
 }
 canvas {
+	padding: 20px;
 	border: 1px solid #999;
 }
 </style>
@@ -17,105 +18,167 @@ canvas {
 <script>
 
 window.onload = function (){
-	var ctx=null, pw, ph, seg=4, posData = [], originalData = [];
-	var img = new Image();
-	img.src = "common/img/bnr_tmp.jpg?"+new Date().getTime();
+	var ctx=null, pw, ph, seg=5, posData = [], oPos = [], isMesh = false;
+	var img = new Image(), meshBtn = document.getElementById("triangle");
+	img.src = "photo.jpg?"+new Date().getTime();
+	
+	meshBtn.addEventListener("click", function (){
+			if(isMesh) {
+				drawPolygons();
+				isMesh = false;
+			}else{
+				drawPolygons();
+				drawTriangle();
+				isMesh = true;
+			}
+		}, false);
+	
 	img.onload = function (){
-		pw = Math.round(img.width/seg);
-		ph = Math.round(img.height/seg);
+		pw = Math.floor(img.width/seg);
+		ph = Math.floor(img.height/seg);
 		var canvas = document.getElementById("canvas");
 		ctx = canvas.getContext("2d");
 		//
 		
-		ctx.lineWidth = 1;
-		ctx.fillStyle = "cyan";
+		ctx.lineWidth = 2;
+		ctx.strokeStyle = "yellow";
 		//
 		(function draw () {
 			var _x=0, _y=0, len = Math.pow(seg, 2)+seg*2+1;
 			for(var i=0; i<len; i++) {
-					//ctx.transform(1,0,0,1,0,0);
-					//ctx.drawImage(img, pw*_x, ph*_y, pw, ph, pw*_x, ph*_y, pw, ph);
 					posData.push({x:pw*_x, y:ph*_y});
-					originalData.push({x:pw*_x, y:ph*_y});
+					oPos.push({x:pw*_x, y:ph*_y});
 					if(_x>=seg) {
 						_x = 0, _y++;
 					}else{_x++;}
 				}
 			})();//一旦即時実行
-			drawTriangle();
+			posData[10].x = posData[10].x-20;
+			posData[10].y = posData[10].y+20;
 			
-		posData[6].x = posData[6].x+20;
-		posData[8].y = posData[8].y+30;
-		drawTriangle();
-
+			drawPolygons();
+			//transformer();
+			
 			
 		}
 		
-	function drawTriangle() {
+	function drawPolygons() {
 		ctx.clearRect(0,0,img.width, img.height);
 		for(var i=0,len=posData.length; i<len; i++) {
 			var x=posData[i].x, y=posData[i].y;
-			if(i==len-1) {return false}//最後の点を付けた後終了
+			if(i==len-1) {break}//最後の点を付けた後終了
 			else{
 				
 			//セグメントA
 			if(i%(seg+1) != seg && i <len-seg-1) {
+				ctx.save()
+				var a,b,c,d,tx,ty;
+				tx = x;
+				ty = y;
+				a = (posData[i+1].x-posData[i].x)/pw;//横伸縮率
+				d = (posData[i+seg+1].y-posData[i].y)/ph;//縦伸縮率
+				c = (posData[i+seg+1].x-posData[i].x)/ph; //横傾斜
+				b = (posData[i+1].y-posData[i].y)/pw;//縦傾斜
+				//
 				ctx.fillStyle = "red";
 				ctx.beginPath();
 				ctx.moveTo(x,y);
 				lineTo(posData[i+1]);//一番目の横棒
 				lineTo(posData[i+seg+1]);//2番目の斜め棒
-				ctx.closePath();
-				ctx.fill();
+				ctx.clip();
 				
-				//ああああああ
+				ctx.setTransform(a,b,c,d,tx,ty);
+				ctx.drawImage(img, x, y, pw, ph, 0, 0, pw, ph);
+				ctx.setTransform(1,0,0,1,0,0);
+				ctx.restore();
 			
 			//セグメントB
+			
+				ctx.save();
+				
 				ctx.fillStyle = "blue";
 				ctx.beginPath();
 				ctx.moveTo(posData[i+1].x,posData[i+1].y);
 				lineTo(posData[i+seg+2]);//一番目のtate 棒
 				lineTo(posData[i+seg+1]);//2番目の斜め棒
-				ctx.closePath();
-				ctx.fill();
+				ctx.clip();
+				
+				tx = posData[i+seg+2].x;
+				ty = posData[i+seg+2].y;
+				a = (posData[i+seg+2].x-posData[i+seg+1].x)/pw;//横伸縮率
+				d = (posData[i+seg+2].y-posData[i+1].y)/ph;//縦伸縮率
+				c = (posData[i+seg+2].x-posData[i+1].x)/ph;//横傾斜
+				b = (posData[i+seg+2].y-posData[i+seg+1].y)/pw; //縦傾斜
+
+				//console.log((posData[i+seg+2].y-posData[i+1].y)/ph);
+
+				ctx.setTransform(a,b,c,d,tx,ty);
+				ctx.drawImage(img, x, y, pw, ph, -pw, -ph, pw, ph);
+				ctx.setTransform(1,0,0,1,0,0);
+			
+				ctx.restore();
 				}
 			}
-			ctx.fillStyle = "yellow";
-			ctx.fillRect(x-2, y-2, 4,4);
+			
 		}
 		
+	
+	}//
+	
+	
 		function lineTo(obj){
 			ctx.lineTo(obj.x,obj.y);
 		}
 		
 		
-		
-		
-		/*var x, y, index = 0;
-			for(var i=0; i<seg; i++) {
-				for(var t=0; t<seg; t++) {
-					var p = posData[index];
-					ctx.strokeStyle = "red";
-					ctx.beginPath();
-					ctx.moveTo(p.x0,p.y0);
-					ctx.lineTo(p.x1,p.y1);
-					ctx.lineTo(p.x2,p.y2);
-					ctx.lineTo(p.x0,p.y0);
-					ctx.closePath();
-					ctx.strokeStyle = "blue";
-					ctx.beginPath();
-					ctx.moveTo(p.x1,p.y1);
-					ctx.lineTo(p.x2,p.y2);
-					ctx.lineTo(p.x3,p.y3);
-					ctx.lineTo(p.x1,p.y1);
-					ctx.closePath();
-					ctx.stroke();
-					index++;
-				}
-			}*/
+		function drawTriangle (){
+			//console.log(ctx);
+			//ガイドだけ表示
+			for(var i=0,len=posData.length; i<len; i++) {
+					var x=posData[i].x, y=posData[i].y;
+					if(i==len-1) {return false}//最後の点を付けた後終了
+					else{
+						
+					//セグメントA
+					if(i%(seg+1) != seg && i <len-seg-1) {
+						ctx.fillStyle = "red";
+						ctx.beginPath();
+						ctx.moveTo(x,y);
+						lineTo(posData[i+1]);//一番目の横棒
+						lineTo(posData[i+seg+1]);//2番目の斜め棒
+						ctx.stroke();
+						
+					//セグメントB
+						ctx.fillStyle = "blue";
+						ctx.beginPath();
+						ctx.moveTo(posData[i+1].x,posData[i+1].y);
+						lineTo(posData[i+seg+2]);//一番目のtate 棒
+						lineTo(posData[i+seg+1]);//2番目の斜め棒
+						//ctx.closePath();
+						ctx.stroke();
+						
+						}
+					}
+				ctx.fillStyle = "yellow";
+				ctx.fillRect(x-2, y-2, 4,4);
+			}
+		} //drawTriangle
+	
+	function transformer() {
+		var count = 0;
+		var deg = 0, step = 360/seg;
+		for(var i=0; i<seg; i++) {
+			for(var t=0; t<seg; t++) {
+				//console.log(Math.sin());
+				var vx = posData[count].x+Math.floor((img.width/6 - posData[count].x)*((count*0.006)));
+				posData[count].x = vx;
+				count++;
+			}		
 		}
-
+		drawPolygons();
 	}
+
+}
 	
 
 </script>
@@ -126,6 +189,7 @@ window.onload = function (){
 
 <body>
 
-<canvas id="canvas" width="250" height="163"></canvas>
+<canvas id="canvas" width="740" height="445"></canvas>
+<button id="triangle">メッシュ</button>
 </body>
 </html>
