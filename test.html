@@ -1,0 +1,129 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>消さないでね</title>
+
+<style>
+body, html, div, canvas {
+	margin: 0;
+	padding: 0;
+}
+canvas {
+	border: 1px solid #999;
+}
+</style>
+
+<script>
+
+window.onload = function (){
+	var ctx=null, pw, ph, seg=4, posData = [], originalData = [];
+	var img = new Image();
+	img.src = "common/img/bnr_tmp.jpg?"+new Date().getTime();
+	img.onload = function (){
+		pw = Math.round(img.width/seg);
+		ph = Math.round(img.height/seg);
+		var canvas = document.getElementById("canvas");
+		ctx = canvas.getContext("2d");
+		//
+		
+		ctx.lineWidth = 1;
+		ctx.fillStyle = "cyan";
+		//
+		(function draw () {
+			var _x=0, _y=0, len = Math.pow(seg, 2)+seg*2+1;
+			for(var i=0; i<len; i++) {
+					//ctx.transform(1,0,0,1,0,0);
+					//ctx.drawImage(img, pw*_x, ph*_y, pw, ph, pw*_x, ph*_y, pw, ph);
+					posData.push({x:pw*_x, y:ph*_y});
+					originalData.push({x:pw*_x, y:ph*_y});
+					if(_x>=seg) {
+						_x = 0, _y++;
+					}else{_x++;}
+				}
+			})();//一旦即時実行
+			drawTriangle();
+			
+		posData[6].x = posData[6].x+20;
+		posData[8].y = posData[8].y+30;
+		drawTriangle();
+
+			
+		}
+		
+	function drawTriangle() {
+		ctx.clearRect(0,0,img.width, img.height);
+		for(var i=0,len=posData.length; i<len; i++) {
+			var x=posData[i].x, y=posData[i].y;
+			if(i==len-1) {return false}//最後の点を付けた後終了
+			else{
+				
+			//セグメントA
+			if(i%(seg+1) != seg && i <len-seg-1) {
+				ctx.fillStyle = "red";
+				ctx.beginPath();
+				ctx.moveTo(x,y);
+				lineTo(posData[i+1]);//一番目の横棒
+				lineTo(posData[i+seg+1]);//2番目の斜め棒
+				ctx.closePath();
+				ctx.fill();
+			
+			//セグメントB
+				ctx.fillStyle = "blue";
+				ctx.beginPath();
+				ctx.moveTo(posData[i+1].x,posData[i+1].y);
+				lineTo(posData[i+seg+2]);//一番目のtate 棒
+				lineTo(posData[i+seg+1]);//2番目の斜め棒
+				ctx.closePath();
+				ctx.fill();
+				}
+			}
+			ctx.fillStyle = "yellow";
+			ctx.fillRect(x-2, y-2, 4,4);
+		}
+		
+		function lineTo(obj){
+			ctx.lineTo(obj.x,obj.y);
+		}
+		
+		
+		
+		
+		/*var x, y, index = 0;
+			for(var i=0; i<seg; i++) {
+				for(var t=0; t<seg; t++) {
+					var p = posData[index];
+					ctx.strokeStyle = "red";
+					ctx.beginPath();
+					ctx.moveTo(p.x0,p.y0);
+					ctx.lineTo(p.x1,p.y1);
+					ctx.lineTo(p.x2,p.y2);
+					ctx.lineTo(p.x0,p.y0);
+					ctx.closePath();
+					ctx.strokeStyle = "blue";
+					ctx.beginPath();
+					ctx.moveTo(p.x1,p.y1);
+					ctx.lineTo(p.x2,p.y2);
+					ctx.lineTo(p.x3,p.y3);
+					ctx.lineTo(p.x1,p.y1);
+					ctx.closePath();
+					ctx.stroke();
+					index++;
+				}
+			}*/
+		}
+
+	}
+	
+
+</script>
+
+
+
+</head>
+
+<body>
+
+<canvas id="canvas" width="250" height="163"></canvas>
+</body>
+</html>
